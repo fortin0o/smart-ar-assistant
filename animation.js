@@ -110,6 +110,11 @@ function initAR() {
   arToolkitContext.init(() => {
     // Copy projection matrix to camera when calibration file is loaded
     camera.projectionMatrix.copy(arToolkitContext.getProjectionMatrix());
+    
+    // Zoom out the camera (wider FOV, makes 3D models appear slightly smaller/further away)
+    const zoomFactor = 0.75;
+    camera.projectionMatrix.elements[0] *= zoomFactor;
+    camera.projectionMatrix.elements[5] *= zoomFactor;
   });
 
   // 8. Create Marker Anchor Group
@@ -136,11 +141,11 @@ function initAR() {
 function onResize() {
   if (!arToolkitSource) return;
   
-  arToolkitSource.onResize();
-  arToolkitSource.copySizeTo(renderer.domElement);
+  arToolkitSource.onResizeElement();
+  arToolkitSource.copyElementSizeTo(renderer.domElement);
   
   if (arToolkitContext && arToolkitContext.arController !== null) {
-    arToolkitSource.copySizeTo(arToolkitContext.arController.canvas);
+    arToolkitSource.copyElementSizeTo(arToolkitContext.arController.canvas);
   }
 }
 
