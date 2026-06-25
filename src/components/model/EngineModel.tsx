@@ -74,7 +74,7 @@ export function EngineModel() {
           toneMappingExposure: 1.2,
         }}
       >
-        <PerspectiveCamera makeDefault position={[0, 1, 4]} fov={50} />
+        <PerspectiveCamera makeDefault position={[0, 1.2, 5]} fov={52} />
 
         <Suspense fallback={null}>
           <SceneSetup />
@@ -84,8 +84,8 @@ export function EngineModel() {
 
         <OrbitControls
           enablePan={false}
-          minDistance={2}
-          maxDistance={8}
+          minDistance={2.5}
+          maxDistance={9}
           minPolarAngle={Math.PI * 0.1}
           maxPolarAngle={Math.PI * 0.85}
           enableDamping
