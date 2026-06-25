@@ -34,7 +34,13 @@ function ClickGroup({ partId, children }: ClickGroupProps) {
   const isSelected = selectedPartId === partId;
   return (
     <group
-      onClick={(e) => { e.stopPropagation(); setSelectedPart(isSelected ? null : partId); }}
+      onClick={(e) => {
+        // We do NOT stop propagation. 
+        // This allows raycasting to hit internal parts (like pistons) through the glass block.
+        // Because RTF events bubble up, the deepest/furthest clicked object might set the state last, 
+        // which means clicking a piston through a block selects the piston!
+        setSelectedPart(isSelected ? null : partId);
+      }}
     >
       {children}
     </group>
@@ -46,41 +52,49 @@ interface EngineMaterialProps {
   color: string;
   roughness?: number;
   metalness?: number;
-  partId?: PartId | 'decorative';
+  partId?: PartId | 'decorative' | 'shell';
   side?: THREE.Side;
 }
 
 function EngineMaterial({ color, roughness = 0.5, metalness = 0.5, partId = 'decorative', side = THREE.FrontSide }: EngineMaterialProps) {
-  const materialRef = useRef<THREE.MeshStandardMaterial>(null);
+  const materialRef = useRef<THREE.MeshPhysicalMaterial>(null);
   const { selectedPartId } = useModelStore();
   
   const isSelected = selectedPartId !== null && selectedPartId === partId;
   const isGhosted = selectedPartId !== null && !isSelected;
+  
+  // Outer shells (cylinder block, head, oil pan) are ALWAYS glass so we can see inside.
+  // Unless they are specifically selected, then they glow.
+  const isShell = partId === 'cylinder' || partId === 'decorative';
+  const shouldBeGlass = isGhosted || (!isSelected && isShell);
 
   useFrame((state) => {
     if (!materialRef.current) return;
     const t = state.clock.getElapsedTime();
     if (isSelected) {
-      materialRef.current.emissiveIntensity = 0.35 + Math.sin(t * 5) * 0.2;
+      materialRef.current.emissiveIntensity = 0.6 + Math.sin(t * 5) * 0.3;
       materialRef.current.emissive.set(MAT.selected);
       materialRef.current.color.set(MAT.selected);
     } else {
       materialRef.current.emissiveIntensity = 0;
-      materialRef.current.color.set(color);
+      materialRef.current.color.set(shouldBeGlass ? '#a0b0c0' : color);
     }
   });
 
   return (
-    <meshStandardMaterial
+    <meshPhysicalMaterial
       ref={materialRef}
-      color={isSelected ? MAT.selected : color}
-      roughness={roughness}
-      metalness={metalness}
+      color={isSelected ? MAT.selected : (shouldBeGlass ? '#a0b0c0' : color)}
+      roughness={shouldBeGlass ? 0.1 : roughness}
+      metalness={shouldBeGlass ? 0.1 : metalness}
       emissive={isSelected ? MAT.selected : '#000000'}
-      emissiveIntensity={isSelected ? 0.35 : 0}
-      transparent={isGhosted}
-      opacity={isGhosted ? 0.15 : 1}
-      depthWrite={!isGhosted}
+      emissiveIntensity={isSelected ? 0.6 : 0}
+      transparent={shouldBeGlass}
+      opacity={shouldBeGlass ? 0.4 : 1}
+      transmission={shouldBeGlass ? 0.9 : 0}
+      thickness={shouldBeGlass ? 0.5 : 0}
+      ior={shouldBeGlass ? 1.5 : 1.5}
+      depthWrite={!shouldBeGlass}
       side={side}
     />
   );
