@@ -78,7 +78,7 @@ function SceneSetup({ isARMode }: { isARMode: boolean }) {
 
 export function EngineModel({ isARMode = false }: EngineModelProps) {
   return (
-    <div className="w-full h-full">
+    <div className="w-full h-full" style={{ background: 'transparent' }}>
       <Canvas
         shadows={!isARMode}
         dpr={[1, 2]}
@@ -86,8 +86,13 @@ export function EngineModel({ isARMode = false }: EngineModelProps) {
           antialias: true,
           toneMapping: THREE.ACESFilmicToneMapping,
           toneMappingExposure: isARMode ? 1.5 : 1.2,
-          // Transparent background in AR mode so the camera feed shows through
           alpha: isARMode,
+          premultipliedAlpha: false,
+        }}
+        onCreated={({ gl }) => {
+          if (isARMode) {
+            gl.setClearColor(0x000000, 0); // fully transparent clear
+          }
         }}
         style={{
           background: isARMode ? 'transparent' : undefined,

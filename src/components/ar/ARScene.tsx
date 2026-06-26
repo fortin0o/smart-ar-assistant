@@ -25,11 +25,7 @@ const EngineModel = dynamic(
   }
 );
 
-// Lazy load camera background (needs browser APIs)
-const CameraBackground = dynamic(
-  () => import('./CameraBackground').then((m) => ({ default: m.CameraBackground })),
-  { ssr: false }
-);
+import { CameraBackground } from './CameraBackground';
 
 export function ARScene() {
   const { mode, isTracking, cameraPermission } = useARStore();
@@ -69,9 +65,15 @@ export function ARScene() {
       </AnimatePresence>
 
       {/* ─── 3D Canvas ─────────────────────────────────────── */}
-      {/* In AR mode: transparent canvas floats above the camera feed */}
-      <div className="absolute inset-0 z-10">
-        <EngineModel isARMode={isARMode} />
+      {/* In AR mode: transparent canvas sits above the camera feed */}
+      {/* pointer-events: none on the container so touches reach OrbitControls on canvas */}
+      <div
+        className="absolute inset-0 z-10"
+        style={{ background: 'transparent', pointerEvents: 'none' }}
+      >
+        <div style={{ width: '100%', height: '100%', pointerEvents: 'auto' }}>
+          <EngineModel isARMode={isARMode} />
+        </div>
       </div>
 
       {/* ─── AR Mode: Corner Brackets (scan frame) ─────────── */}

@@ -8,7 +8,7 @@ import { motion } from 'framer-motion';
 
 export function AnimationSheet() {
   const { activeSheet, closeSheet } = useUIStore();
-  const { isAnimating, setAnimating, explosionProgress, setExplosionProgress, isExploded, setExploded, animationTarget, isXRay, setXRay } = useModelStore();
+  const { isAnimating, setAnimating, explosionProgress, setExplosionProgress, isExploded, setExploded, animationTarget, isXRay, setXRay, manualCrank, setManualCrank } = useModelStore();
   const isOpen = activeSheet === 'animation';
 
   const animations = [
@@ -120,8 +120,8 @@ export function AnimationSheet() {
             min="0"
             max="1"
             step="0.001"
-            value={useModelStore((state) => state.manualCrank)}
-            onChange={(e) => useModelStore.getState().setManualCrank(parseFloat(e.target.value))}
+            value={manualCrank}
+            onChange={(e) => setManualCrank(parseFloat(e.target.value))}
             className="w-full h-2 bg-black/50 rounded-lg appearance-none cursor-pointer accent-amber-500"
           />
           <div className="flex justify-between text-xs text-zinc-500 mt-2">
