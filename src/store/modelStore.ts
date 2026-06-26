@@ -5,6 +5,7 @@ interface ModelStore extends ModelState {
   setSelectedPart: (id: PartId | null) => void;
   setAnimating: (animating: boolean, target?: string | null) => void;
   setExploded: (exploded: boolean) => void;
+  setXRay: (xray: boolean) => void;
   setScale: (scale: number) => void;
   resetModel: () => void;
 }
@@ -14,6 +15,7 @@ const initialState: ModelState = {
   isAnimating: false,
   animationTarget: null,
   isExploded: false,
+  isXRay: false,
   rotationSpeed: 0.3,
   scale: 1,
 };
@@ -29,6 +31,9 @@ export const useModelStore = create<ModelStore>((set) => ({
 
   setExploded: (exploded) =>
     set({ isExploded: exploded }),
+
+  setXRay: (xray) =>
+    set({ isXRay: xray }),
 
   setScale: (scale) =>
     set({ scale: Math.max(0.3, Math.min(3, scale)) }),

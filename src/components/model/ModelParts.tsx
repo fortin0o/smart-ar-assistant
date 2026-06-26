@@ -58,7 +58,7 @@ interface EngineMaterialProps {
 
 function EngineMaterial({ color, roughness = 0.5, metalness = 0.5, partId = 'decorative', side = THREE.FrontSide }: EngineMaterialProps) {
   const materialRef = useRef<THREE.MeshPhysicalMaterial>(null);
-  const { selectedPartId } = useModelStore();
+  const { selectedPartId, isXRay } = useModelStore();
   
   const isSelected = selectedPartId !== null && selectedPartId === partId;
   const isGhosted = selectedPartId !== null && !isSelected;
@@ -66,7 +66,8 @@ function EngineMaterial({ color, roughness = 0.5, metalness = 0.5, partId = 'dec
   // Outer shells (cylinder block, head, oil pan) are ALWAYS glass so we can see inside.
   // Unless they are specifically selected, then they glow.
   const isShell = partId === 'cylinder' || partId === 'decorative';
-  const shouldBeGlass = isGhosted || (!isSelected && isShell);
+  const shouldBeWireframe = isXRay && isShell && !isSelected;
+  const shouldBeGlass = isGhosted || (!isSelected && isShell && !isXRay);
 
   useFrame((state) => {
     if (!materialRef.current) return;
@@ -75,6 +76,10 @@ function EngineMaterial({ color, roughness = 0.5, metalness = 0.5, partId = 'dec
       materialRef.current.emissiveIntensity = 0.6 + Math.sin(t * 5) * 0.3;
       materialRef.current.emissive.set(MAT.selected);
       materialRef.current.color.set(MAT.selected);
+    } else if (shouldBeWireframe) {
+      materialRef.current.emissiveIntensity = 0.5;
+      materialRef.current.emissive.set('#00aaff');
+      materialRef.current.color.set('#00aaff');
     } else {
       materialRef.current.emissiveIntensity = 0;
       materialRef.current.color.set(shouldBeGlass ? '#a0b0c0' : color);
@@ -84,18 +89,19 @@ function EngineMaterial({ color, roughness = 0.5, metalness = 0.5, partId = 'dec
   return (
     <meshPhysicalMaterial
       ref={materialRef}
-      color={isSelected ? MAT.selected : (shouldBeGlass ? '#a0b0c0' : color)}
+      color={isSelected ? MAT.selected : (shouldBeWireframe ? '#00aaff' : (shouldBeGlass ? '#a0b0c0' : color))}
       roughness={shouldBeGlass ? 0.1 : roughness}
       metalness={shouldBeGlass ? 0.1 : metalness}
-      emissive={isSelected ? MAT.selected : '#000000'}
-      emissiveIntensity={isSelected ? 0.6 : 0}
-      transparent={shouldBeGlass}
-      opacity={shouldBeGlass ? 0.4 : 1}
+      emissive={isSelected ? MAT.selected : (shouldBeWireframe ? '#00aaff' : '#000000')}
+      emissiveIntensity={isSelected ? 0.6 : (shouldBeWireframe ? 0.5 : 0)}
+      transparent={shouldBeGlass || shouldBeWireframe}
+      opacity={shouldBeWireframe ? 0.2 : (shouldBeGlass ? 0.4 : 1)}
       transmission={shouldBeGlass ? 0.9 : 0}
       thickness={shouldBeGlass ? 0.5 : 0}
       ior={shouldBeGlass ? 1.5 : 1.5}
-      depthWrite={!shouldBeGlass}
+      depthWrite={!shouldBeGlass && !shouldBeWireframe}
       side={side}
+      wireframe={shouldBeWireframe}
     />
   );
 }

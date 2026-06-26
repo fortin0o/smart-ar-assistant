@@ -3,12 +3,12 @@
 import { BottomSheet } from './BottomSheet';
 import { useUIStore } from '@/store/uiStore';
 import { useModelStore } from '@/store/modelStore';
-import { Play, Pause, FastForward, Maximize2, RotateCw } from 'lucide-react';
+import { Play, Pause, FastForward, Maximize2, RotateCw, Eye } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export function AnimationSheet() {
   const { activeSheet, closeSheet } = useUIStore();
-  const { isAnimating, setAnimating, isExploded, setExploded, animationTarget } = useModelStore();
+  const { isAnimating, setAnimating, isExploded, setExploded, animationTarget, isXRay, setXRay } = useModelStore();
   const isOpen = activeSheet === 'animation';
 
   const animations = [
@@ -27,6 +27,14 @@ export function AnimationSheet() {
       color: 'blue',
       onClick: () => setExploded(!isExploded),
       active: isExploded,
+    },
+    {
+      id: 'xray',
+      icon: <Eye className="w-5 h-5" />,
+      label: isXRay ? 'Solid View' : 'X-Ray Mode',
+      color: 'cyan',
+      onClick: () => setXRay(!isXRay),
+      active: isXRay,
     },
     {
       id: 'cycle',
