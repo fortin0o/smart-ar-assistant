@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CameraOff, RefreshCw } from 'lucide-react';
+import { CameraOff, RefreshCw, SwitchCamera } from 'lucide-react';
 import { useARStore } from '@/store/arStore';
 
 export function CameraBackground() {
@@ -11,6 +11,7 @@ export function CameraBackground() {
   const { setCameraPermission, setError, cameraPermission } = useARStore();
   const [ready, setReady] = useState(false);
   const [retrying, setRetrying] = useState(false);
+  const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
 
   const startCamera = async () => {
     setRetrying(false);
@@ -26,7 +27,7 @@ export function CameraBackground() {
 
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
-          facingMode: { ideal: 'environment' }, // prefer rear camera
+          facingMode: { ideal: facingMode }, // Use state for facing mode
           width: { ideal: 1920 },
           height: { ideal: 1080 },
         },
@@ -72,8 +73,7 @@ export function CameraBackground() {
       streamRef.current = null;
       setReady(false);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [facingMode]);
 
   const handleRetry = () => {
     setRetrying(true);
@@ -135,6 +135,17 @@ export function CameraBackground() {
             transition={{ duration: 4, ease: 'linear', repeat: Infinity }}
           />
         </div>
+      )}
+
+      {/* Camera Switch Button */}
+      {ready && (
+        <button
+          onClick={() => setFacingMode(prev => prev === 'environment' ? 'user' : 'environment')}
+          className="absolute top-16 right-4 z-50 p-3 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white/80 hover:text-white hover:bg-black/60 transition-colors"
+          title="Switch Camera"
+        >
+          <SwitchCamera className="w-6 h-6" />
+        </button>
       )}
 
       {/* Permission denied state */}
