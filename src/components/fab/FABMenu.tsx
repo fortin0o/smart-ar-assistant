@@ -5,6 +5,7 @@ import { Plus, MessageSquare, Mic, Info, Play, Settings, ScanLine } from 'lucide
 import { useUIStore, SheetId } from '@/store/uiStore';
 import { useRouter } from 'next/navigation';
 import { useModelStore } from '@/store/modelStore';
+import { useARStore } from '@/store/arStore';
 
 interface MenuItem {
   id: SheetId;
@@ -24,6 +25,7 @@ const MENU_ITEMS: MenuItem[] = [
 export function FABMenu() {
   const { fabOpen, toggleFab, openSheet } = useUIStore();
   const { selectedPartId } = useModelStore();
+  const { setMode } = useARStore();
   const router = useRouter();
 
   const handleItemClick = (id: SheetId) => {
@@ -77,7 +79,10 @@ export function FABMenu() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 20, scale: 0.8 }}
               transition={{ delay: MENU_ITEMS.length * 0.05, type: 'spring', stiffness: 300, damping: 20 }}
-              onClick={() => { router.push('/ar'); }}
+              onClick={() => { 
+                setMode('camera'); 
+                toggleFab(); 
+              }}
               className="group flex items-center gap-3"
             >
               <span className="px-3 py-1.5 rounded-lg text-sm font-medium text-white/80 bg-black/40 backdrop-blur-md border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity">
