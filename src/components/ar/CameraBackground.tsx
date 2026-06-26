@@ -20,6 +20,10 @@ export function CameraBackground() {
         streamRef.current.getTracks().forEach((t) => t.stop());
       }
 
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Camera API is not supported in this browser or requires HTTPS.');
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: { ideal: 'environment' }, // prefer rear camera
@@ -35,10 +39,18 @@ export function CameraBackground() {
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        
+        // Use native event listener for better reliability with media streams
         videoRef.current.onloadedmetadata = () => {
-          videoRef.current?.play();
+          videoRef.current?.play().catch(e => console.error('Play error:', e));
           setReady(true);
         };
+
+        // Fallback in case the event already fired or fails to fire
+        if (videoRef.current.readyState >= 1) {
+          videoRef.current.play().catch(e => console.error('Play error:', e));
+          setReady(true);
+        }
       }
     } catch (err: unknown) {
       const error = err as { name?: string; message?: string };
@@ -69,6 +81,13 @@ export function CameraBackground() {
     setTimeout(startCamera, 300);
   };
 
+  const handleVideoLoaded = () => {
+    if (videoRef.current) {
+      videoRef.current.play().catch(e => console.error('Video play error:', e));
+      setReady(true);
+    }
+  };
+
   return (
     <div className="absolute inset-0 overflow-hidden bg-black">
       {/* Live camera video feed */}
@@ -78,6 +97,7 @@ export function CameraBackground() {
         autoPlay
         playsInline
         muted
+        onLoadedMetadata={handleVideoLoaded}
         style={{ opacity: ready ? 1 : 0, transition: 'opacity 0.5s ease' }}
       />
 

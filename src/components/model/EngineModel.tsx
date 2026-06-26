@@ -103,7 +103,7 @@ export function EngineModel({ isARMode = false }: EngineModelProps) {
         <Suspense fallback={null}>
           <SceneSetup isARMode={isARMode} />
           <EngineGroup />
-          {!isARMode && <Environment preset="city" />}
+          <Environment preset="city" />
         </Suspense>
 
         <OrbitControls
