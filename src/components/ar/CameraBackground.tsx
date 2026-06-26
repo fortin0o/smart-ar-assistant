@@ -4,39 +4,49 @@ import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CameraOff, RefreshCw, SwitchCamera } from 'lucide-react';
 import { useARStore } from '@/store/arStore';
-import { getARVideoElement, getARStream } from '@/services/mindar/controller';
 
-export function CameraBackground() {
+interface CameraBackgroundProps {
+  videoStream?: MediaStream | null;
+}
+
+export function CameraBackground({ videoStream }: CameraBackgroundProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const { setCameraPermission, setError, cameraPermission } = useARStore();
   const [ready, setReady] = useState(false);
+  const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
 
+  // Use existing stream or start our own
   useEffect(() => {
-    // Use the shared video element from MindAR if available
-    const mindarVideo = getARVideoElement();
-    if (mindarVideo && videoRef.current) {
-      // Use the already-playing MindAR video as source
-      videoRef.current.srcObject = mindarVideo.srcObject;
+    if (videoStream && videoRef.current) {
+      videoRef.current.srcObject = videoStream;
       videoRef.current.play().then(() => setReady(true)).catch(() => {});
       setCameraPermission('granted');
       return;
     }
 
-    // Fallback: start our own camera if MindAR hasn't started yet
+    // Fallback: start camera if no stream provided
+    let localStream: MediaStream | null = null;
+    let cancelled = false;
+
     const startCamera = async () => {
       try {
         if (!navigator.mediaDevices?.getUserMedia) {
-          throw new Error('Camera API is not supported in this browser or requires HTTPS.');
+          throw new Error('Camera API not supported');
         }
 
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+        localStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: facingMode }, width: { ideal: 1280 }, height: { ideal: 720 } },
         });
+
+        if (cancelled) {
+          localStream.getTracks().forEach(t => t.stop());
+          return;
+        }
 
         setCameraPermission('granted');
 
         if (videoRef.current) {
-          videoRef.current.srcObject = stream;
+          videoRef.current.srcObject = localStream;
           await videoRef.current.play();
           setReady(true);
         }
@@ -44,7 +54,7 @@ export function CameraBackground() {
         const error = err as { name?: string; message?: string };
         if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
           setCameraPermission('denied');
-          setError('Camera permission denied. Please allow camera access.');
+          setError('Camera permission denied');
         } else {
           setError(error.message ?? 'Camera not available');
           setCameraPermission('denied');
@@ -55,9 +65,12 @@ export function CameraBackground() {
     startCamera();
 
     return () => {
-      // Don't stop the stream here - MindAR's stopAR handles cleanup
+      cancelled = true;
+      if (localStream) {
+        localStream.getTracks().forEach(t => t.stop());
+      }
     };
-  }, [setCameraPermission, setError]);
+  }, [facingMode, videoStream]);
 
   return (
     <div className="absolute inset-0 overflow-hidden bg-black">
@@ -101,6 +114,16 @@ export function CameraBackground() {
             transition={{ duration: 4, ease: 'linear', repeat: Infinity }}
           />
         </div>
+      )}
+
+      {!videoStream && (
+        <button
+          onClick={() => setFacingMode(prev => prev === 'environment' ? 'user' : 'environment')}
+          className="absolute top-16 right-4 z-50 p-3 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white/80 hover:text-white hover:bg-black/60 transition-colors"
+          title="Switch Camera"
+        >
+          <SwitchCamera className="w-6 h-6" />
+        </button>
       )}
 
       {cameraPermission === 'denied' && (

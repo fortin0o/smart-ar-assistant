@@ -1,6 +1,5 @@
 'use client';
 
-// MindAR window globals
 declare global {
   interface Window {
     MINDAR?: {
@@ -47,83 +46,102 @@ export function getARState(): ARDetectionState {
 }
 
 let controller: any = null;
-let videoEl: HTMLVideoElement | null = null;
 let stream: MediaStream | null = null;
-
-export function getARVideoElement(): HTMLVideoElement | null {
-  return videoEl;
-}
 
 export function getARStream(): MediaStream | null {
   return stream;
 }
 
-export async function startAR(markerUrl: string = '/ar/marker.mind'): Promise<{ projectionMatrix: Float32Array }> {
-  if (!window.MINDAR?.IMAGE) {
-    await new Promise<void>((resolve, reject) => {
-      const s = document.createElement('script');
-      s.src = '/mindar/mindar-image.prod.js';
-      s.onload = () => resolve();
-      s.onerror = () => reject(new Error('Failed to load MindAR'));
-      document.head.appendChild(s);
-    });
-  }
-
+/**
+ * Start camera and return the stream.
+ * Call this before startAR to share the video element.
+ */
+export async function startCamera(): Promise<{ stream: MediaStream; video: HTMLVideoElement }> {
   stream = await navigator.mediaDevices.getUserMedia({
     video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
   });
 
-  // Create hidden video for MindAR processing
-  videoEl = document.createElement('video');
-  videoEl.srcObject = stream;
-  videoEl.setAttribute('autoplay', '');
-  videoEl.setAttribute('muted', '');
-  videoEl.setAttribute('playsinline', '');
-  videoEl.style.display = 'none';
-  document.body.appendChild(videoEl);
-  await videoEl.play();
+  const video = document.createElement('video');
+  video.srcObject = stream;
+  video.setAttribute('autoplay', '');
+  video.setAttribute('muted', '');
+  video.setAttribute('playsinline', '');
+  video.style.width = '100%';
+  video.style.height = '100%';
+  video.style.objectFit = 'cover';
+  video.style.position = 'absolute';
+  video.style.top = '0';
+  video.style.left = '0';
+  document.body.appendChild(video);
+  await video.play();
 
-  const { Controller } = window.MINDAR!.IMAGE!;
-  controller = new Controller({
-    inputWidth: videoEl.videoWidth,
-    inputHeight: videoEl.videoHeight,
-    maxTrack: 1,
-    warmupTolerance: 3,
-    missTolerance: 3,
-  });
+  return { stream, video };
+}
 
-  const resp = await fetch(markerUrl);
-  const buf = await resp.arrayBuffer();
-  controller.addImageTargetsFromBuffer(buf);
+export function startAR(videoEl: HTMLVideoElement, markerUrl: string = '/ar/marker.mind'): Promise<{ projectionMatrix: Float32Array }> {
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (!window.MINDAR?.IMAGE) {
+        await new Promise<void>((resolve2, reject2) => {
+          const s = document.createElement('script');
+          s.src = '/mindar/mindar-image.prod.js';
+          s.onload = () => resolve2();
+          s.onerror = () => reject2(new Error('Failed to load MindAR'));
+          document.head.appendChild(s);
+        });
+      }
 
-  controller.onUpdate = (data: any) => {
-    if (data.type === 'updateMatrix') {
+      const { Controller } = window.MINDAR!.IMAGE!;
+      controller = new Controller({
+        inputWidth: videoEl.videoWidth,
+        inputHeight: videoEl.videoHeight,
+        maxTrack: 1,
+        warmupTolerance: 3,
+        missTolerance: 3,
+      });
+
+      const resp = await fetch(markerUrl);
+      const buf = await resp.arrayBuffer();
+      controller.addImageTargetsFromBuffer(buf);
+
+      controller.onUpdate = (data: any) => {
+        if (data.type === 'updateMatrix') {
+          STATE.isLoaded = true;
+          STATE.markerFound = !!data.worldMatrix;
+          STATE.cameraMatrix = data.worldMatrix ? new Float32Array(data.worldMatrix) : null;
+          notify({ ...STATE });
+        }
+      };
+
+      controller.dummyRun(videoEl);
+
       STATE.isLoaded = true;
-      STATE.markerFound = !!data.worldMatrix;
-      STATE.cameraMatrix = data.worldMatrix ? new Float32Array(data.worldMatrix) : null;
+      STATE.projectionMatrix = new Float32Array(controller.getProjectionMatrix());
       notify({ ...STATE });
+
+      controller.processVideo(videoEl);
+
+      resolve({ projectionMatrix: STATE.projectionMatrix! });
+    } catch (err) {
+      STATE.error = err instanceof Error ? err.message : 'AR init failed';
+      notify({ ...STATE });
+      reject(err);
     }
-  };
-
-  controller.dummyRun(videoEl);
-
-  STATE.isLoaded = true;
-  STATE.projectionMatrix = new Float32Array(controller.getProjectionMatrix());
-  notify({ ...STATE });
-
-  controller.processVideo(videoEl);
-
-  return { projectionMatrix: STATE.projectionMatrix! };
+  });
 }
 
 export function stopAR() {
   controller?.stopProcessVideo();
   controller = null;
-  videoEl?.remove();
-  videoEl = null;
   stream?.getTracks().forEach(t => t.stop());
   stream = null;
 
-  Object.assign(STATE, { isLoaded: false, markerFound: false, cameraMatrix: null, projectionMatrix: null, error: null });
+  Object.assign(STATE, {
+    isLoaded: false,
+    markerFound: false,
+    cameraMatrix: null,
+    projectionMatrix: null,
+    error: null,
+  });
   notify({ ...STATE });
 }
