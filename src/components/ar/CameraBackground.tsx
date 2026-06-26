@@ -66,6 +66,7 @@ export function CameraBackground() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     startCamera();
     return () => {
       // Clean up stream on unmount

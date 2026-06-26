@@ -80,7 +80,7 @@ export function SettingsSheet() {
             ].map((t) => (
               <button
                 key={t.id}
-                onClick={() => setTheme(t.id as any)}
+                onClick={() => setTheme(t.id as 'dark' | 'light' | 'system')}
                 className={`flex flex-col items-center gap-2 p-3 rounded-xl border transition-colors ${
                   theme === t.id
                     ? 'bg-zinc-100 text-zinc-900 border-zinc-200'
