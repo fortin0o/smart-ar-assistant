@@ -2,9 +2,11 @@
 
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Environment, Grid, Stars, PerspectiveCamera } from '@react-three/drei';
-import { Suspense, useRef, useEffect, useMemo } from 'react';
+import { Suspense, useRef, useEffect } from 'react';
 import { useModelStore } from '@/store/modelStore';
+import { useGLTFModelStore } from '@/store/gltfModelStore';
 import { EngineModelParts } from './ModelParts';
+import { EngineGLTFModel } from './EngineGLTFModel';
 import * as THREE from 'three';
 
 interface EngineModelProps {
@@ -17,18 +19,17 @@ interface EngineModelProps {
 function EngineGroup() {
   const groupRef = useRef<THREE.Group>(null);
   const { scale } = useModelStore();
+  const { useGLTFModel } = useGLTFModelStore();
 
   useFrame((state) => {
     if (!groupRef.current) return;
-    // Gentle idle rotation
     groupRef.current.rotation.y += 0.002;
-    // Subtle floating
     groupRef.current.position.y = Math.sin(state.clock.getElapsedTime() * 0.5) * 0.05;
   });
 
   return (
     <group ref={groupRef} scale={scale}>
-      <EngineModelParts />
+      {useGLTFModel ? <EngineGLTFModel /> : <EngineModelParts />}
     </group>
   );
 }
@@ -47,7 +48,6 @@ function MindARMarkerPositioner({
 
   useEffect(() => {
     if (groupRef.current && cameraMatrix) {
-      // MindAR provides a column-major 4x4 world matrix
       const markerMatrix = new THREE.Matrix4().fromArray(cameraMatrix);
       groupRef.current.matrixAutoUpdate = false;
       groupRef.current.matrix.copy(markerMatrix);
@@ -143,9 +143,6 @@ export function EngineModel({
             <MindARMarkerPositioner cameraMatrix={cameraMatrix} projectionMatrix={projectionMatrix}>
               <EngineGroup />
             </MindARMarkerPositioner>
-          ) : isARMode ? (
-            /* In AR but no marker: show the engine at default position */
-            <EngineGroup />
           ) : (
             <EngineGroup />
           )}

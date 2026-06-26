@@ -7,7 +7,7 @@ import { useARStore } from '@/store/arStore';
 import { useModelStore } from '@/store/modelStore';
 import { ENGINE_PARTS } from '@/data/engineParts';
 import { GlassCard } from '../ui/GlassCard';
-import { ZoomIn, ZoomOut, RotateCcw, Layers, Info, Wifi, WifiOff, Cube } from 'lucide-react';
+import { ZoomIn, ZoomOut, RotateCcw, Layers, Info, Wifi, WifiOff } from 'lucide-react';
 import { ARToggleButton } from './ARToggleButton';
 import { CameraBackground } from './CameraBackground';
 import { startAR, stopAR, subscribeAR, getARState } from '@/services/mindar/controller';

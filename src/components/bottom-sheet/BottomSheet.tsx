@@ -50,7 +50,7 @@ export function BottomSheet({ isOpen, onClose, title, icon, children, height = '
                 onClose();
               }
             }}
-            className={`fixed bottom-0 left-0 right-0 z-50 w-full md:w-auto md:min-w-[400px] md:max-w-xl md:left-auto md:right-4 md:bottom-4 md:rounded-3xl rounded-t-3xl ${HEIGHT_MAP[height]} flex flex-col`}
+            className={`fixed bottom-0 left-0 right-0 z-50 w-full md:w-auto md:min-w-[400px] md:max-w-xl md:left-auto md:right-4 md:bottom-4 md:rounded-3xl rounded-t-3xl safe-bottom ${HEIGHT_MAP[height]} flex flex-col`}
             style={{
               background: 'rgba(12, 18, 28, 0.85)',
               backdropFilter: 'blur(24px)',
@@ -72,7 +72,7 @@ export function BottomSheet({ isOpen, onClose, title, icon, children, height = '
               </div>
               <button
                 onClick={onClose}
-                className="p-2 rounded-full hover:bg-white/10 transition-colors"
+                className="p-2 rounded-full hover:bg-white/10 transition-colors touch-target"
               >
                 <X className="w-5 h-5 text-white/60" />
               </button>

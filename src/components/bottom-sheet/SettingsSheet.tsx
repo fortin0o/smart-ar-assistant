@@ -3,18 +3,28 @@
 import { BottomSheet } from './BottomSheet';
 import { useUIStore } from '@/store/uiStore';
 import { useSettingsStore } from '@/store/settingsStore';
-import { Settings, Volume2, VolumeX, Moon, Sun, Monitor, Maximize } from 'lucide-react';
+import { useGLTFModelStore } from '@/store/gltfModelStore';
+import { Settings, Volume2, VolumeX, Moon, Sun, Monitor, Maximize, Box, Download } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useModelStore } from '@/store/modelStore';
 
 export function SettingsSheet() {
   const { activeSheet, closeSheet } = useUIStore();
-  const { 
-    voiceEnabled, setVoiceEnabled, 
+  const {
+    voiceEnabled, setVoiceEnabled,
     modelScale, setModelScale,
-    theme, setTheme 
+    theme, setTheme
   } = useSettingsStore();
-  
+
+  const { useGLTFModel, setUseGLTFModel, modelStatus } = useGLTFModelStore();
+  const { setScale } = useModelStore();
+
   const isOpen = activeSheet === 'settings';
+
+  const handleScaleChange = (val: number) => {
+    setModelScale(val);
+    setScale(val);
+  };
 
   return (
     <BottomSheet
@@ -25,6 +35,48 @@ export function SettingsSheet() {
       height="lg"
     >
       <div className="flex flex-col gap-6 pt-2">
+        {/* Model Toggle */}
+        <div className="p-5 rounded-2xl bg-white/5 border border-white/10">
+          <div className="flex items-center gap-3 mb-4">
+            <Box className="w-5 h-5 text-zinc-400" />
+            <div className="font-medium text-white">3D Model</div>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setUseGLTFModel(false)}
+              className={`flex-1 p-3 rounded-xl border text-sm font-medium transition-colors ${
+                !useGLTFModel
+                  ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-400'
+                  : 'bg-black/20 text-zinc-400 border-white/5 hover:bg-white/5'
+              }`}
+            >
+              <div className="text-xs mb-1">Procedural</div>
+              <div className="text-[10px] opacity-60">Built-in engine</div>
+            </button>
+            <button
+              onClick={() => {
+                setUseGLTFModel(true);
+              }}
+              className={`flex-1 p-3 rounded-xl border text-sm font-medium transition-colors ${
+                useGLTFModel
+                  ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-400'
+                  : 'bg-black/20 text-zinc-400 border-white/5 hover:bg-white/5'
+              }`}
+            >
+              <div className="text-xs mb-1">GLTF Model</div>
+              <div className="text-[10px] opacity-60">
+                {modelStatus === 'loading' ? 'Loading...' : modelStatus === 'error' ? 'Not found' : 'External .gltf'}
+              </div>
+            </button>
+          </div>
+          {useGLTFModel && modelStatus === 'none' && (
+            <div className="mt-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300">
+              <p>Place your <code className="text-amber-200">engine.gltf</code> (with <code className="text-amber-200">.bin</code> and textures) in <code className="text-amber-200">public/models/</code></p>
+              <p className="mt-1">Part names in the GLTF should match: Piston, Crankshaft, Valve, Cylinder, Camshaft, SparkPlug</p>
+            </div>
+          )}
+        </div>
+
         {/* Voice Toggle */}
         <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10">
           <div className="flex items-center gap-4">
@@ -55,11 +107,11 @@ export function SettingsSheet() {
           </div>
           <input
             type="range"
-            min="0.5"
-            max="2"
+            min="0.3"
+            max="3"
             step="0.1"
             value={modelScale}
-            onChange={(e) => setModelScale(parseFloat(e.target.value))}
+            onChange={(e) => handleScaleChange(parseFloat(e.target.value))}
             className="w-full h-2 bg-black/50 rounded-lg appearance-none cursor-pointer accent-zinc-300"
           />
           <div className="flex justify-between text-xs text-zinc-500 mt-2">

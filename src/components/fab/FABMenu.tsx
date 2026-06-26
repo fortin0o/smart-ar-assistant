@@ -48,20 +48,20 @@ export function FABMenu() {
               if (item.id === 'object' && !selectedPartId) return null;
 
               return (
-                <motion.button
-                  key={item.id}
-                  initial={{ opacity: 0, y: 20, scale: 0.8 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 20, scale: 0.8 }}
-                  transition={{ delay: i * 0.05, type: 'spring', stiffness: 300, damping: 20 }}
-                  onClick={() => handleItemClick(item.id)}
-                  className="group flex items-center gap-3"
-                >
-                  <span className="px-3 py-1.5 rounded-lg text-sm font-medium text-white/80 bg-black/40 backdrop-blur-md border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity">
-                    {item.label}
-                  </span>
-                  <div
-                    className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-transform duration-200 hover:scale-110 active:scale-95 ${item.color}`}
+              <motion.button
+                key={item.id}
+                initial={{ opacity: 0, y: 20, scale: 0.8 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 20, scale: 0.8 }}
+                transition={{ delay: i * 0.05, type: 'spring', stiffness: 300, damping: 20 }}
+                onClick={() => handleItemClick(item.id)}
+                className="group flex items-center gap-3 touch-target"
+              >
+                <span className="px-3 py-1.5 rounded-lg text-sm font-medium text-white/80 bg-black/40 backdrop-blur-md border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {item.label}
+                </span>
+                <div
+                  className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-transform duration-200 hover:scale-110 active:scale-95 ${item.color}`}
                     style={{
                       background: 'rgba(20,25,35,0.8)',
                       backdropFilter: 'blur(16px)',

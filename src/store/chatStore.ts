@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import type { ChatMessage, ChatState, PartId } from '@/types';
 
 interface ChatStore extends ChatState {
@@ -19,29 +20,40 @@ const WELCOME_MESSAGE: ChatMessage = {
   partContext: null,
 };
 
-export const useChatStore = create<ChatStore>((set, get) => ({
-  messages: [WELCOME_MESSAGE],
-  isLoading: false,
-  isVoiceActive: false,
-  isSpeaking: false,
-  currentInput: '',
+export const useChatStore = create<ChatStore>()(
+  persist(
+    (set) => ({
+      messages: [WELCOME_MESSAGE],
+      isLoading: false,
+      isVoiceActive: false,
+      isSpeaking: false,
+      currentInput: '',
 
-  addMessage: (msg) => {
-    const newMsg: ChatMessage = {
-      ...msg,
-      id: `msg_${Date.now()}_${Math.random().toString(36).slice(2)}`,
-      timestamp: Date.now(),
-    };
-    set((s) => ({ messages: [...s.messages, newMsg] }));
-  },
+      addMessage: (msg) => {
+        const newMsg: ChatMessage = {
+          ...msg,
+          id: `msg_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+          timestamp: Date.now(),
+        };
+        set((s) => ({ messages: [...s.messages, newMsg] }));
+      },
 
-  setLoading: (loading) => set({ isLoading: loading }),
+      setLoading: (loading) => set({ isLoading: loading }),
 
-  setVoiceActive: (active) => set({ isVoiceActive: active }),
+      setVoiceActive: (active) => set({ isVoiceActive: active }),
 
-  setSpeaking: (speaking) => set({ isSpeaking: speaking }),
+      setSpeaking: (speaking) => set({ isSpeaking: speaking }),
 
-  setCurrentInput: (input) => set({ currentInput: input }),
+      setCurrentInput: (input) => set({ currentInput: input }),
 
-  clearMessages: () => set({ messages: [WELCOME_MESSAGE] }),
-}));
+      clearMessages: () => set({ messages: [WELCOME_MESSAGE] }),
+    }),
+    {
+      name: 'smart-ar-chat',
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({
+        messages: state.messages,
+      }),
+    }
+  )
+);
